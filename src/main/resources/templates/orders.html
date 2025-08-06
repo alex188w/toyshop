@@ -1,0 +1,24 @@
+<h2>История заказов</h2>
+
+<div th:each="order : ${orders}">
+    <h3>Заказ #[[${order.id}]] — [[${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}]]</h3>
+    <table border="1">
+        <tr>
+            <th>Товар</th>
+            <th>Цена</th>
+            <th>Количество</th>
+            <th>Сумма</th>
+        </tr>
+        <tr th:each="item : ${order.items}">
+            <td th:text="${item.product.name}"></td>
+            <td th:text="${item.product.price}"></td>
+            <td th:text="${item.quantity}"></td>
+            <td th:text="${item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity))}"></td>
+        </tr>
+        <tr>
+            <td colspan="3"><b>Итого</b></td>
+            <td th:text="${order.items.stream().map(i -> i.product.price.multiply(T(java.math.BigDecimal).valueOf(i.quantity))).reduce(T(java.math.BigDecimal).ZERO, (a,b)->a.add(b))}"></td>
+        </tr>
+    </table>
+    <hr/>
+</div>

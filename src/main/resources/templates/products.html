@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Витрина товаров</title>
+    <style>
+        .navigation {
+            width: 750px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            /* cursor: pointer; */
+
+        }
+
+        .products {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            /* gap: 50px; */
+            width: 750px;
+            margin-top: 50px;
+            /* height: 200px; */
+            border: 1px solid;
+        }
+
+        img {
+            max-height: 300px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navigation">
+        <h1>Товары</h1>
+        <form action="/products/add" method="get">
+            <button type="submit">Добавить товар</button>
+        </form>
+        <a href="/cart" style="float:right;"><b>Корзина</b></a>
+    </div>
+    <form th:action="@{/products/search}" method="get">
+        <input type="text" name="keyword" placeholder="Поиск по названию">
+        <button type="submit">Найти</button>
+    </form>
+    <div class="products" th:each="product : ${productPage.content}">
+        <img style="margin-top: 10px;" th:src="${product.imageUrl}" alt="image" width="100" />
+        <p th:text="${product.name}">Название</p>
+        <p th:text="${product.price} + ' ₽'">Цена</p>
+        <p th:text="'Доступно: ' + ${product.quantity}">Доступно</p>
+        <form method="post" th:action="@{/cart/add/{id}(id=${product.id})}">
+            <button style="margin-bottom: 10px;" type="submit" th:disabled="${product.quantity == 0}">
+                В корзину
+            </button>
+        </form>
+        <!-- <form action="/cart/add/${product.id}" method="post">
+            <input type="number" name="quantity" value="1" min="1" max="${product.quantity}">
+            <button type="submit" th:disabled="${product.quantity == 0}">В корзину</button>
+        </form>
+        <p style="margin-bottom: 10px;" th:text="'Осталось: ' + ${product.quantity}"></p> -->
+    </div>
+</body>
+
+</html>

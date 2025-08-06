@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Добавление товара</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        td {
+            padding: 10px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .drop-zone {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        img {
+            max-height: 250px;
+            margin-top: 10px;
+        }
+
+        .top-link {
+            display: block;
+            text-align: right;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="top-link">
+            <a href="/products"><b>НА ГЛАВНУЮ</b></a>
+        </div>
+
+        <h2>Добавление товара</h2>
+
+        <form action="/products/add" method="post">
+            <table>
+                <tr>
+                    <td><label>Название:</label></td>
+                    <td><input type="text" name="name" required></td>
+                </tr>
+                <tr>
+                    <td><label>Описание:</label></td>
+                    <td><textarea name="description" rows="4"></textarea></td>
+                </tr>
+                <tr>
+                    <td><label>Цена:</label></td>
+                    <td><input type="number" name="price" step="0.01" required></td>
+                </tr>
+                <tr>
+                    <td><label>Количество:</label></td>
+                    <td><input type="number" name="quantity" min="0" required></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="hidden" name="imageUrl" id="imageUrl" readonly>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="drop-zone" id="drop-zone">
+                            <button type="button" id="select-file-btn">Выбрать файл</button>
+                            <input type="file" id="file-input" style="display:none" accept="image/*" />
+                            <div id="preview">
+                                <img id="preview-img" />
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: center;">
+                        <button type="submit">Сохранить</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</body>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const selectFileBtn = document.getElementById('select-file-btn');
+    const imageUrlInput = document.getElementById('imageUrl');
+    const previewDiv = document.getElementById('preview');
+
+    selectFileBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+        uploadFile(e.target.files[0]);
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '#eee';
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = 'transparent';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = 'transparent';
+        if (e.dataTransfer.files.length) {
+            uploadFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    function uploadFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Можно загружать только изображения!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/products/uploadImage", {
+            method: "POST",
+            body: formData,
+            headers: { "Accept": "application/json" }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("Сервер вернул ошибку");
+                return response.json();
+            })
+            .then(data => {
+                imageUrlInput.value = data.url;
+                let img = document.getElementById("preview-img");
+                if (!img) {
+                    img = document.createElement("img");
+                    img.id = "preview-img";
+                    img.style.maxHeight = "300px";
+                    previewDiv.appendChild(img);
+                }
+                img.src = data.url;
+            })
+            .catch(err => {
+                console.error("Ошибка загрузки изображения", err);
+            });
+    }
+</script>
+
+</body>
+
+</html>
