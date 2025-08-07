@@ -29,7 +29,7 @@ public class CartController {
     @GetMapping
     public String viewCart(HttpServletRequest request, Model model) {
         String sessionId = request.getSession(true).getId();
-        Cart cart = cartService.getCartBySessionId(sessionId);
+        Cart cart = cartService.getActiveCartBySessionId(sessionId);
         model.addAttribute("cart", cart);
         return "cart";
     }
@@ -66,15 +66,14 @@ public class CartController {
     @PostMapping("/checkout")
     public String checkout(HttpServletRequest request) {
         String sessionId = request.getSession(true).getId();
-        cartService.checkout(sessionId);
-        return "redirect:/orders";
-    }
 
-    // @GetMapping("/orders")
-    // public String orderHistory(HttpServletRequest request, Model model) {
-    //     String sessionId = request.getSession(true).getId();
-    //     List<Cart> orders = cartRepository.findAllBySessionIdAndStatus(sessionId, CartStatus.COMPLETED);
-    //     model.addAttribute("orders", orders);
-    //     return "orders"; // создадим шаблон orders.html
-    // }
+        // Завершаем оформление и получаем завершённый заказ
+        Cart completedOrder = cartService.checkout(sessionId);
+
+        // Удаляем сессию, чтобы создать новую корзину в будущем
+        request.getSession().invalidate();
+
+        // Перенаправляем на страницу заказа
+        return "redirect:/orders/" + completedOrder.getId();
+    }
 }

@@ -1,6 +1,7 @@
 package example.toyshop.service;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import example.toyshop.model.CartStatus;
 import example.toyshop.model.Product;
 import example.toyshop.repository.CartRepository;
 import example.toyshop.repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -20,15 +22,22 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
-    public Cart getCartBySessionId(String sessionId) {
-        return cartRepository.findBySessionId(sessionId)
+    public Cart getActiveCartBySessionId(String sessionId) {
+        List<Cart> carts = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE);
+        if (carts.size() > 1) {
+            throw new IllegalStateException("Обнаружено несколько активных корзин для sessionId: " + sessionId);
+        }
+        return carts.stream()
+                .findFirst()
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
                     newCart.setSessionId(sessionId);
+                    newCart.setStatus(CartStatus.ACTIVE);
                     return cartRepository.save(newCart);
                 });
     }
 
+    @Transactional
     public void addToCart(String sessionId, Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Товар не найден"));
@@ -37,14 +46,18 @@ public class CartService {
             throw new RuntimeException("Товара нет в наличии");
         }
 
-        Cart cart = cartRepository.findBySessionId(sessionId)
-                .orElseGet(() -> {
-                    Cart newCart = new Cart();
-                    newCart.setSessionId(sessionId);
-                    return cartRepository.save(newCart);
-                });
+        List<Cart> carts = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE);
+        Cart cart;
 
-        // Проверим, есть ли уже такой товар
+        if (carts.isEmpty()) {
+            Cart newCart = new Cart();
+            newCart.setSessionId(sessionId);
+            newCart.setStatus(CartStatus.ACTIVE);
+            cart = cartRepository.save(newCart);
+        } else {
+            cart = carts.get(0); // берем первую активную корзину
+        }
+
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst();
@@ -61,6 +74,7 @@ public class CartService {
 
         product.setQuantity(product.getQuantity() - 1);
         productRepository.save(product);
+
         cartRepository.save(cart);
     }
 
@@ -126,7 +140,8 @@ public class CartService {
     }
 
     public Cart getActiveCart(String sessionId) {
-        return cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE)
+        return cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE).stream()
+                .findFirst()
                 .orElseGet(() -> {
                     Cart cart = new Cart();
                     cart.setSessionId(sessionId);
@@ -135,16 +150,12 @@ public class CartService {
                 });
     }
 
-    public void checkout(String sessionId) {
+    public Cart checkout(String sessionId) {
         Cart cart = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("Активная корзина не найдена"));
-
-        if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("Корзина пуста");
-        }
+                .stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("Активная корзина не найдена"));
 
         cart.setStatus(CartStatus.COMPLETED);
-        cartRepository.save(cart);
+        return cartRepository.save(cart);
     }
-
 }

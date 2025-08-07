@@ -1,10 +1,7 @@
-DROP TABLE IF EXISTS products;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_active_cart_per_session
+ON cart (session_id)
+WHERE status = 'ACTIVE';
 
-CREATE TABLE products (
-    id SERIAL PRIMARY KEY,
-    name TEXT,
-    description TEXT,
-    price DECIMAL,
-    image_url TEXT
-);
-
+-- для создания частичного уникального индекса 
+-- CREATE UNIQUE INDEX ON cart(session_id) WHERE status = 'ACTIVE';
+-- JPA (@Table(uniqueConstraints = …)) не поддерживает частичные (условные) индексы

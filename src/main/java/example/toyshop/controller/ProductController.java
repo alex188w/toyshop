@@ -13,10 +13,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 @Controller
@@ -28,12 +31,21 @@ public class ProductController {
 
     @GetMapping
     public String listProducts(@RequestParam(defaultValue = "0") int page,
-                               @RequestParam(defaultValue = "10") int size,
-                               @RequestParam(defaultValue = "name") String sortBy,
-                               Model model) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            Model model) {
         Page<Product> productPage = productService.getAll(page, size, sortBy);
         model.addAttribute("productPage", productPage);
         return "products";
+    }
+
+    @GetMapping("/{id}")
+    public String viewProduct(@PathVariable Long id, Model model) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Товар не найден"));
+
+        model.addAttribute("product", product);
+        return "product"; // шаблон product.html
     }
 
     @GetMapping("/search")
@@ -42,7 +54,7 @@ public class ProductController {
         return "products";
     }
 
-        /**
+    /**
      * Показывает форму добавления нового поста.
      *
      * @param model модель с новым объектом поста
@@ -60,8 +72,7 @@ public class ProductController {
         return "redirect:/products";
     }
 
-
-        /**
+    /**
      * Обрабатывает загрузку изображений через multipart.
      *
      * @param file файл изображения

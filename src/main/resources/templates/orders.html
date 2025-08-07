@@ -13,12 +13,19 @@
             <td th:text="${item.product.name}"></td>
             <td th:text="${item.product.price}"></td>
             <td th:text="${item.quantity}"></td>
-            <td th:text="${item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity))}"></td>
+            <td th:text="${item.totalPrice}"></td>
         </tr>
         <tr>
             <td colspan="3"><b>Итого</b></td>
-            <td th:text="${order.items.stream().map(i -> i.product.price.multiply(T(java.math.BigDecimal).valueOf(i.quantity))).reduce(T(java.math.BigDecimal).ZERO, (a,b)->a.add(b))}"></td>
+            <td th:text="${order.totalAmount}"></td>
         </tr>
     </table>
-    <hr/>
+    <a th:href="@{'/orders/' + ${order.id}}">Смотреть заказ</a>
+    <hr />
+
+
+</div>
+
+<div style="margin-top: 30px;">
+    <a href="/products">← Вернуться к товарам</a>
 </div>

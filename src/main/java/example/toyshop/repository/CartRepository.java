@@ -11,7 +11,7 @@ import example.toyshop.model.CartStatus;
 public interface CartRepository extends JpaRepository<Cart, Long> {
     Optional<Cart> findBySessionId(String sessionId);
 
-    Optional<Cart> findBySessionIdAndStatus(String sessionId, CartStatus status);
+    List<Cart> findByStatus(CartStatus status);
 
-    List<Cart> findAllBySessionIdAndStatus(String sessionId, CartStatus status);
+    List<Cart> findBySessionIdAndStatus(String sessionId, CartStatus status);   
 }
