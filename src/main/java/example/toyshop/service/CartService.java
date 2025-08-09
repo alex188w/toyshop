@@ -74,7 +74,6 @@ public class CartService {
 
         product.setQuantity(product.getQuantity() - 1);
         productRepository.save(product);
-
         cartRepository.save(cart);
     }
 
@@ -94,7 +93,6 @@ public class CartService {
                 break;
             }
         }
-
         cartRepository.save(cart);
     }
 
@@ -135,7 +133,6 @@ public class CartService {
             }
             return false;
         });
-
         cartRepository.save(cart);
     }
 
