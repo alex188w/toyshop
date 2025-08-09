@@ -4,6 +4,14 @@
 <head>
     <title>Витрина товаров</title>
     <style>
+        .showcase {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin: auto;
+            width: 750px;
+        }
+
         .navigation {
             width: 750px;
             display: flex;
@@ -13,6 +21,25 @@
             /* cursor: pointer; */
             margin: auto;
             /* style="width: 60%; margin: auto;" */
+            margin-bottom: 25px;
+        }
+
+        .button-add {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .reset {
+            width: 750px;
+            display: flex;
+            justify-content: end;
+            /* align-items: flex-end; */
+            margin: auto;
         }
 
         .products {
@@ -38,46 +65,128 @@
 
         .order {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 25px;
         }
 
         img {
             max-height: 300px;
         }
+
+        .pagination ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            gap: 5px;
+        }
+
+        .pagination li {
+            display: inline;
+        }
+
+        .pagination a {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            text-decoration: none;
+            color: black;
+        }
+
+        .pagination .active a {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
     </style>
 </head>
 
 <body>
+    <div class="showcase">
+        <h1 style="text-align: center;">Витрина товаров</h1>
 
-    <div class="navigation">
-        <h1>Товары</h1>
-        <form action="/products/add" method="get">
-            <button type="submit">Добавить товар</button>
-        </form>
-        <div class="order">
-            <a href="/cart" style="float:right;"><b>Корзина</b></a>
-            <a href="/orders">Мои заказы</a>
+        <div class="navigation">
+
+            <form action="/products/add" method="get">
+                <button class="button-add" type="submit">Добавить товар</button>
+            </form>
+            <div class="order">
+                <a href="/cart" style="float:right;"><b>Корзина</b></a>
+                <a href="/orders"><b>Мои заказы</b></a>
+            </div>
+
+        </div>       
+
+        <div class="navigation">
+            <!-- Поиск -->
+            <form th:action="@{/products}" method="get">
+                <input type="hidden" name="sort" th:value="${sort}">
+                <input type="hidden" name="size" th:value="${size}">
+                <input type="text" name="keyword" th:value="${keyword}" placeholder="Поиск по названию">
+                <button type="submit">Найти</button>
+            </form>
+            <!-- Сортировка -->
+            <form th:action="@{/products}" method="get">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="size" th:value="${size}">
+                <select name="sort">
+                    <option value="price_asc" th:selected="${sort == 'price_asc'}">Цена: по возрастанию</option>
+                    <option value="price_desc" th:selected="${sort == 'price_desc'}">Цена: по убыванию</option>
+                    <option value="name_asc" th:selected="${sort == 'name_asc'}">Название: А-Я</option>
+                    <option value="name_desc" th:selected="${sort == 'name_desc'}">Название: Я-А</option>
+                </select>
+                <button type="submit">Применить</button>
+            </form>
+            <!-- Количество товаров на страницу -->
+            <form th:action="@{/products}" method="get">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="sort" th:value="${sort}">
+                <select name="size">
+                    <option value="5" th:selected="${size == 5}">5</option>
+                    <option value="10" th:selected="${size == 10}">10</option>
+                    <option value="20" th:selected="${size == 20}">20</option>
+                </select>
+                <button type="submit">Применить</button>
+            </form>
         </div>
 
+        <div class="pagination">
+            <ul>
+                <li th:if="${currentPage > 0}">
+                    <a
+                        th:href="@{/products(page=${currentPage - 1}, size=${size}, sort=${sort}, keyword=${keyword})}">←</a>
+                </li>
+
+                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a th:href="@{/products(page=${i}, size=${size}, sort=${sort}, keyword=${keyword})}"
+                        th:text="${i + 1}"></a>
+                </li>
+
+                <li th:if="${currentPage + 1 < totalPages}">
+                    <a
+                        th:href="@{/products(page=${currentPage + 1}, size=${size}, sort=${sort}, keyword=${keyword})}">→</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="reset">
+            <a th:href="@{/products}"><button type="button">Сбросить фильтр</button></a>
+        </div>
+
+        <div class="products" th:each="product : ${products}">
+            <a class="product" th:href="@{/products/{id}(id=${product.id})}">
+                <img style="margin-top: 10px;" th:src="${product.imageUrl}" alt="image" width="210" />
+            </a>
+            <p th:text="${product.name}">Название</p>
+            <p th:text="'Цена: ' + ${product.price} + ' ₽'">Цена</p>
+            <p th:text="'Доступно: ' + ${product.quantity}">Доступно</p>
+            <form method="post" th:action="@{/cart/add/{id}(id=${product.id})}">
+                <button style="margin-bottom: 10px;" type="submit" th:disabled="${product.quantity == 0}">
+                    В корзину
+                </button>
+            </form>
+        </div>
     </div>
-    <form th:action="@{/products/search}" method="get">
-        <input type="text" name="keyword" placeholder="Поиск по названию">
-        <button type="submit">Найти</button>
-    </form>
-    <div class="products" th:each="product : ${productPage.content}">
-        <a class="product" th:href="@{/products/{id}(id=${product.id})}">
-            <img style="margin-top: 10px;" th:src="${product.imageUrl}" alt="image" width="210" />
-        </a>
-        <p th:text="${product.name}">Название</p>
-        <p th:text="'Цена: ' + ${product.price} + ' ₽'">Цена</p>
-        <p th:text="'Доступно: ' + ${product.quantity}">Доступно</p>
-        <form method="post" th:action="@{/cart/add/{id}(id=${product.id})}">
-            <button style="margin-bottom: 10px;" type="submit" th:disabled="${product.quantity == 0}">
-                В корзину
-            </button>
-        </form>
-    </div>
+
 </body>
 
 </html>
