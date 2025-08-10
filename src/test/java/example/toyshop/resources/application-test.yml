@@ -1,0 +1,20 @@
+# Conversion to YAML from Properties formar report
+# Warnings:
+# - The yaml file had comments which are lost in the refactoring!
+# spring:
+#   jpa:
+#     hibernate:
+#       ddl-auto: create-drop
+#     show-sql: true
+#     properties:
+#       hibernate:
+#         format_sql: true
+#         enable_lazy_load_no_trans: true
+#         highlight_sql: true
+#         use_sql_comments: true
+
+# logging:
+#   level:
+#     root: WARN
+logging.level:
+  org.springframework.jdbc.core.JdbcTemplate: DEBUG # для логирования SQL запросов

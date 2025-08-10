@@ -15,7 +15,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -33,6 +35,9 @@ public class Cart {
     private CartStatus status = CartStatus.ACTIVE;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Исключаем поля, ведущие к циклу, из toString(), equals(), hashCode(), которые генерирует Lombok @Data
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<CartItem> items = new ArrayList<>();
 
     private LocalDateTime createdAt = LocalDateTime.now();
