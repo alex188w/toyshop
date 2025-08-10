@@ -140,22 +140,27 @@
     const imageUrlInput = document.getElementById('imageUrl');
     const previewDiv = document.getElementById('preview');
 
+    // Обработчик клика по кнопке выбора файла — открывает стандартное окно выбора файла
     selectFileBtn.addEventListener('click', () => fileInput.click());
 
+    // Обработка выбора файла через диалог выбора
     fileInput.addEventListener('change', (e) => {
         uploadFile(e.target.files[0]);
     });
 
+    // Обработка события перетаскивания файла над зоной дропа — отменяем стандартное поведение и подсвечиваем зону
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.style.backgroundColor = '#eee';
     });
 
+    // Обработка ухода файла из зоны дропа — сбрасываем подсветку
     dropZone.addEventListener('dragleave', (e) => {
         e.preventDefault();
         dropZone.style.backgroundColor = 'transparent';
     });
 
+    // Обработка сброса (drop) файла в зону дропа — отменяем стандартное поведение, сбрасываем подсветку и запускаем загрузку файла
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.style.backgroundColor = 'transparent';
@@ -164,15 +169,19 @@
         }
     });
 
+    // Функция загрузки файла на сервер
     function uploadFile(file) {
+        // Проверяем, что файл — изображение
         if (!file.type.startsWith('image/')) {
             alert('Можно загружать только изображения!');
             return;
         }
 
+        // Создаем объект FormData для отправки файла через fetch
         const formData = new FormData();
         formData.append("file", file);
 
+        // Отправляем POST-запрос на сервер с файлом
         fetch("/products/uploadImage", {
             method: "POST",
             body: formData,
@@ -183,7 +192,10 @@
                 return response.json();
             })
             .then(data => {
+                // Записываем URL загруженного изображения в скрытое поле формы
                 imageUrlInput.value = data.url;
+
+                // Обновляем превью изображения
                 let img = document.getElementById("preview-img");
                 if (!img) {
                     img = document.createElement("img");

@@ -13,6 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 import org.springframework.http.MediaType;
 
+/**
+ * Контроллер для управления товарами.
+ */
 @Controller
 @RequestMapping("/products")
 @RequiredArgsConstructor
@@ -21,6 +24,16 @@ public class ProductController {
     private final ProductService productService;
     private final ImageService imageService;
 
+    /**
+     * Отображает список товаров с возможностью поиска, сортировки и пагинации.
+     *
+     * @param keyword параметр поиска по названию товара (необязательный)
+     * @param sort    способ сортировки (например, "price_asc", "name_desc")
+     * @param page    номер страницы (начинается с 0)
+     * @param size    количество товаров на странице
+     * @param model   модель для передачи данных в представление
+     * @return имя шаблона страницы со списком товаров
+     */
     @GetMapping
     public String listProducts(
             @RequestParam(required = false) String keyword,
@@ -41,6 +54,13 @@ public class ProductController {
         return "products";
     }
 
+    /**
+     * Отображает страницу с деталями одного товара по его ID.
+     *
+     * @param id    идентификатор товара
+     * @param model модель для передачи данных в представление
+     * @return имя шаблона страницы с деталями товара
+     */
     @GetMapping("/{id}")
     public String viewProduct(@PathVariable Long id, Model model) {
         model.addAttribute("product", productService.getProductById(id));
@@ -48,10 +68,10 @@ public class ProductController {
     }
 
     /**
-     * Показывает форму добавления нового поста.
+     * Показывает форму для добавления нового товара.
      *
-     * @param model модель с новым объектом поста
-     * @return шаблон add-post.html
+     * @param model модель для передачи нового объекта товара в представление
+     * @return имя шаблона страницы с формой добавления товара
      */
     @GetMapping("/add")
     public String showAddProductForm(Model model) {
@@ -59,6 +79,12 @@ public class ProductController {
         return "add-product";
     }
 
+    /**
+     * Обрабатывает отправку формы для добавления нового товара.
+     *
+     * @param product объект товара, заполненный из формы
+     * @return редирект на страницу списка товаров
+     */
     @PostMapping("/add")
     public String addProduct(@ModelAttribute Product product) {
         productService.saveProduct(product);
@@ -66,10 +92,10 @@ public class ProductController {
     }
 
     /**
-     * Обрабатывает загрузку изображений через multipart.
+     * Обрабатывает загрузку изображения товара через multipart запрос.
      *
-     * @param file файл изображения
-     * @return JSON с URL загруженного изображения
+     * @param file загружаемый файл изображения
+     * @return JSON-ответ с URL загруженного изображения
      */
     @PostMapping(value = "/uploadImage", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody

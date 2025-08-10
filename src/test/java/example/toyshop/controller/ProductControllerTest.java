@@ -24,6 +24,12 @@ import example.toyshop.model.Product;
 import example.toyshop.service.ImageService;
 import example.toyshop.service.ProductService;
 
+/**
+ * Unit-тесты для {@link ProductController} с использованием @WebMvcTest.
+ * 
+ * Использует MockMvc для тестирования HTTP-запросов к контроллеру,
+ * а также моки сервисов {@link ProductService} и {@link ImageService}.
+ */
 @WebMvcTest(ProductController.class)
 class ProductControllerTest {
 
@@ -36,6 +42,15 @@ class ProductControllerTest {
     @MockitoBean
     private ImageService imageService;
 
+    /**
+     * Тестирует получение страницы списка продуктов с параметрами фильтрации и
+     * пагинации.
+     * Проверяет:
+     * - HTTP статус 200 OK,
+     * - отображение view с именем "products",
+     * - наличие в модели атрибутов: products, currentPage, totalPages, keyword,
+     * sort, size.
+     */
     @Test
     void testListProducts() throws Exception {
         Product p = new Product(1L, "Toy", "Nice toy", new BigDecimal("10.0"), null, 5);
@@ -58,6 +73,13 @@ class ProductControllerTest {
                 .andExpect(model().attribute("size", 10));
     }
 
+    /**
+     * Тестирует отображение страницы конкретного продукта по ID.
+     * Проверяет:
+     * - HTTP статус 200 OK,
+     * - отображение view с именем "product",
+     * - наличие в модели атрибута "product".
+     */
     @Test
     void testViewProduct() throws Exception {
         Product p = new Product(1L, "Toy", "Nice toy", new BigDecimal("10.0"), null, 5);
@@ -70,6 +92,13 @@ class ProductControllerTest {
                 .andExpect(model().attributeExists("product"));
     }
 
+    /**
+     * Тестирует отображение формы добавления нового продукта.
+     * Проверяет:
+     * - HTTP статус 200 OK,
+     * - отображение view с именем "add-product",
+     * - наличие в модели атрибута "product".
+     */
     @Test
     void testShowAddProductForm() throws Exception {
         mockMvc.perform(get("/products/add"))
@@ -78,9 +107,14 @@ class ProductControllerTest {
                 .andExpect(model().attributeExists("product"));
     }
 
+    /**
+     * Тестирует добавление нового продукта через POST-запрос с параметрами формы.
+     * Проверяет:
+     * - редирект на страницу списка продуктов,
+     * - вызов метода сохранения продукта в сервисе.
+     */
     @Test
     void testAddProduct() throws Exception {
-        // Здесь можно отправить параметры формы для добавления продукта
         mockMvc.perform(post("/products/add")
                 .param("name", "New Toy")
                 .param("description", "Fun toy")
@@ -92,6 +126,14 @@ class ProductControllerTest {
         Mockito.verify(productService).saveProduct(any(Product.class));
     }
 
+    /**
+     * Тестирует загрузку изображения через multipart-запрос.
+     * Использует мок для возврата URL загруженного изображения.
+     * Проверяет:
+     * - HTTP статус 200 OK,
+     * - JSON с полем "url" с корректным значением,
+     * - content-type application/json.
+     */
     @Test
     void testUploadImage() throws Exception {
         MockMultipartFile file = new MockMultipartFile(

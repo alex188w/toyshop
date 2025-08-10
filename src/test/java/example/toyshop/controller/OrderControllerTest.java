@@ -26,6 +26,13 @@ class OrderControllerTest {
     @MockitoBean
     private CartRepository cartRepository;
 
+    /**
+     * Тестирует отображение страницы списка заказов:
+     * - Мокаем метод findByStatus, чтобы вернуть два фейковых заказа.
+     * - Проверяем статус 200 OK.
+     * - Проверяем использование view "orders".
+     * - Проверяем, что в модель передан атрибут "orders".
+     */
     @Test
     void testViewOrders() throws Exception {
         List<Cart> fakeOrders = List.of(new Cart(), new Cart());
@@ -37,6 +44,13 @@ class OrderControllerTest {
                 .andExpect(model().attributeExists("orders"));
     }
 
+    /**
+     * Тестирует отображение конкретного заказа по id, если заказ найден:
+     * - Мокаем метод findById для возвращения заказа.
+     * - Проверяем статус 200 OK.
+     * - Проверяем использование view "order".
+     * - Проверяем, что в модель передан атрибут "order".
+     */
     @Test
     void testViewOrder_Found() throws Exception {
         Cart order = new Cart();
@@ -48,6 +62,11 @@ class OrderControllerTest {
                 .andExpect(model().attributeExists("order"));
     }
 
+    /**
+     * Тестирует ситуацию, когда заказ с заданным id не найден:
+     * - Мокаем метод findById для возвращения пустого Optional.
+     * - Проверяем, что сервер возвращает статус 404 Not Found.
+     */
     @Test
     void testViewOrder_NotFound() throws Exception {
         Mockito.when(cartRepository.findById(999L)).thenReturn(Optional.empty());

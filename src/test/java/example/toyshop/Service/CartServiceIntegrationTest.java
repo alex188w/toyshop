@@ -16,6 +16,14 @@ import example.toyshop.repository.ProductRepository;
 import example.toyshop.service.CartService;
 import jakarta.transaction.Transactional;
 
+/**
+ * Интеграционные тесты для {@link CartService}.
+ * 
+ * Тестируют реальные взаимодействия с базой данных через репозитории,
+ * а также логику работы корзины (добавление товара и оформление заказа).
+ * 
+ * @Transactional — для отката изменений в базе после каждого теста.
+ */
 @SpringBootTest
 @Transactional
 class CartServiceIntegrationTest {
@@ -31,6 +39,11 @@ class CartServiceIntegrationTest {
 
     private String sessionId = "session-1";
 
+    /**
+     * Подготавливает тестовые данные перед каждым тестом:
+     * очищает таблицы корзин и продуктов,
+     * создаёт один продукт с количеством 10 штук.
+     */
     @BeforeEach
     void setup() {
         cartRepository.deleteAll();
@@ -42,6 +55,15 @@ class CartServiceIntegrationTest {
         productRepository.save(product);
     }
 
+    /**
+     * Тестирует добавление товара в корзину и оформление заказа.
+     * 
+     * Шаги теста:
+     * - Добавляет товар в корзину с помощью cartService.addToCart
+     * - Проверяет, что корзина не пуста
+     * - Оформляет заказ через cartService.checkout
+     * - Проверяет, что статус корзины изменился на COMPLETED
+     */
     @Test
     void testAddToCartAndCheckout() {
         Product product = productRepository.findAll().get(0);

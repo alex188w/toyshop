@@ -25,6 +25,27 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Интеграционные тесты для
+ * {@link example.toyshop.controller.ProductController}.
+ * 
+ * <p>
+ * Тестируются основные сценарии работы с продуктами через веб-интерфейс:
+ * просмотр списка продуктов, просмотр отдельного продукта, показ формы
+ * добавления,
+ * добавление нового продукта и загрузка изображения.
+ * </p>
+ * 
+ * <p>
+ * Используется {@link MockMvc} для имитации HTTP-запросов к контроллеру.
+ * </p>
+ * 
+ * <p>
+ * Тесты запускаются в контексте Spring с использованием
+ * аннотаций {@link SpringBootTest}, {@link Transactional} и
+ * {@link AutoConfigureMockMvc}.
+ * </p>
+ */
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
@@ -44,22 +65,24 @@ public class ProductControllerIntegrationTest {
 
     private MockMvc mockMvc;
 
+    /**
+     * Настройка тестового окружения перед каждым тестом:
+     * инициализация {@link MockMvc}, очистка репозиториев и добавление тестовых
+     * продуктов.
+     */
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
         cartItemRepository.deleteAll();
         cartRepository.deleteAll();
         productRepository.deleteAll();
-        productRepository.deleteAll();
 
-        // Добавляем продукт для тестов
         Product p1 = new Product();
         p1.setName("Машинка");
         p1.setDescription("Игрушечная машинка");
         p1.setPrice(BigDecimal.valueOf(50));
         p1.setImageUrl(null);
         p1.setQuantity(5);
-
         productRepository.save(p1);
 
         Product p2 = new Product();
@@ -68,10 +91,19 @@ public class ProductControllerIntegrationTest {
         p2.setPrice(BigDecimal.valueOf(30));
         p2.setImageUrl(null);
         p2.setQuantity(3);
-
         productRepository.save(p2);
     }
 
+    /**
+     * Тестирует получение страницы со списком продуктов.
+     * 
+     * <p>
+     * Проверяется, что запрос возвращает HTTP 200, используется правильный шаблон
+     * и в модель передаются два продукта, включая продукт с именем "Машинка".
+     * </p>
+     * 
+     * @throws Exception при ошибках выполнения запроса
+     */
     @Test
     void testListProducts() throws Exception {
         mockMvc.perform(get("/products")
@@ -86,6 +118,16 @@ public class ProductControllerIntegrationTest {
                         hasProperty("name", is("Машинка")))));
     }
 
+    /**
+     * Тестирует просмотр страницы отдельного продукта по ID.
+     * 
+     * <p>
+     * Проверяется HTTP 200, правильное имя представления и передача продукта
+     * с ожидаемым именем в модель.
+     * </p>
+     * 
+     * @throws Exception при ошибках выполнения запроса
+     */
     @Test
     void testViewProduct() throws Exception {
         Product product = productRepository.findAll().get(0);
@@ -97,6 +139,16 @@ public class ProductControllerIntegrationTest {
                 .andExpect(model().attribute("product", hasProperty("name", is(product.getName()))));
     }
 
+    /**
+     * Тестирует отображение формы добавления нового продукта.
+     * 
+     * <p>
+     * Проверяется, что возвращается HTTP 200, используется шаблон "add-product"
+     * и в модель передаётся пустой объект продукта.
+     * </p>
+     * 
+     * @throws Exception при ошибках выполнения запроса
+     */
     @Test
     void testShowAddProductForm() throws Exception {
         mockMvc.perform(get("/products/add"))
@@ -105,6 +157,16 @@ public class ProductControllerIntegrationTest {
                 .andExpect(model().attributeExists("product"));
     }
 
+    /**
+     * Тестирует добавление нового продукта через POST-запрос.
+     * 
+     * <p>
+     * Проверяется, что после успешного добавления происходит редирект
+     * на страницу списка продуктов.
+     * </p>
+     * 
+     * @throws Exception при ошибках выполнения запроса
+     */
     @Test
     void testAddProduct() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/products/add")
@@ -114,6 +176,17 @@ public class ProductControllerIntegrationTest {
                 .andExpect(redirectedUrl("/products"));
     }
 
+    /**
+     * Тестирует загрузку изображения для продукта.
+     * 
+     * <p>
+     * Отправляется multipart-запрос с тестовым изображением,
+     * проверяется успешный ответ с JSON-объектом, содержащим URL загруженного
+     * файла.
+     * </p>
+     * 
+     * @throws Exception при ошибках выполнения запроса
+     */
     @Test
     void testUploadImage() throws Exception {
         MockMultipartFile file = new MockMultipartFile(

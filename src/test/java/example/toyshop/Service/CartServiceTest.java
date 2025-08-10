@@ -30,6 +30,15 @@ import example.toyshop.service.CartService;
 
 import java.util.Optional;
 
+/**
+ * Unit-тесты для {@link CartService} с использованием Mockito.
+ * 
+ * <p>
+ * Покрываются основные сценарии работы с корзиной:
+ * получение активной корзины, добавление товара,
+ * удаление товара и оформление заказа (checkout).
+ * </p>
+ */
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
 
@@ -44,6 +53,14 @@ class CartServiceTest {
 
     private final String sessionId = "session-1";
 
+    /**
+     * Тестирует получение активной корзины, если она уже существует.
+     * 
+     * <p>
+     * Проверяется, что метод возвращает существующую корзину с статусом ACTIVE
+     * для данного sessionId.
+     * </p>
+     */
     @Test
     void testGetActiveCart_existing() {
         Cart cart = new Cart();
@@ -58,6 +75,15 @@ class CartServiceTest {
         assertSame(cart, result);
     }
 
+    /**
+     * Тестирует создание новой активной корзины, если ранее такой не было.
+     * 
+     * <p>
+     * Проверяется, что при отсутствии активной корзины с данным sessionId,
+     * создаётся новая корзина с правильным статусом и sessionId, и она сохраняется
+     * в репозитории.
+     * </p>
+     */
     @Test
     void testGetActiveCart_newCartCreated() {
         when(cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE))
@@ -76,6 +102,14 @@ class CartServiceTest {
         verify(cartRepository).save(any());
     }
 
+    /**
+     * Тестирует добавление продукта в корзину.
+     * 
+     * <p>
+     * Проверяется корректное добавление товара в новую корзину, создание корзины,
+     * сохранение корзины и обновление количества товара.
+     * </p>
+     */
     @Test
     void testAddToCart_existingProductAndCart() {
         String sessionId = "session-1";
@@ -112,6 +146,15 @@ class CartServiceTest {
         verify(productRepository).save(any(Product.class));
     }
 
+    /**
+     * Тестирует удаление товара из корзины.
+     * 
+     * <p>
+     * Проверяется, что после удаления корзина не содержит данного товара,
+     * а количество товара на складе увеличивается на количество удалённого из
+     * корзины.
+     * </p>
+     */
     @Test
     void testRemoveFromCart() {
         Product product = new Product();
@@ -137,6 +180,14 @@ class CartServiceTest {
         verify(productRepository).save(product);
     }
 
+    /**
+     * Тестирует успешное оформление заказа (checkout).
+     * 
+     * <p>
+     * Проверяется, что у активной корзины меняется статус на COMPLETED и происходит
+     * сохранение.
+     * </p>
+     */
     @Test
     void testCheckout_success() {
         Cart cart = new Cart();
@@ -152,6 +203,14 @@ class CartServiceTest {
         verify(cartRepository).save(cart);
     }
 
+    /**
+     * Тестирует ошибку при оформлении заказа, если нет активной корзины.
+     * 
+     * <p>
+     * Проверяется, что при отсутствии активной корзины с данным sessionId
+     * выбрасывается {@link IllegalStateException}.
+     * </p>
+     */
     @Test
     void testCheckout_noActiveCart_throws() {
         when(cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE))

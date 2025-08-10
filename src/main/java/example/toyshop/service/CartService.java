@@ -15,6 +15,9 @@ import example.toyshop.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Сервис для работы с корзиной покупок.
+ */
 @Service
 @RequiredArgsConstructor
 public class CartService {
@@ -22,6 +25,14 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
+    /**
+     * Получает активную корзину по идентификатору сессии.
+     * Если активная корзина отсутствует, создаёт новую.
+     *
+     * @param sessionId идентификатор сессии пользователя
+     * @return активная корзина
+     * @throws IllegalStateException если найдено более одной активной корзины для sessionId
+     */
     public Cart getActiveCartBySessionId(String sessionId) {
         List<Cart> carts = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE);
         if (carts.size() > 1) {
@@ -37,6 +48,14 @@ public class CartService {
                 });
     }
 
+    /**
+     * Добавляет товар в корзину пользователя.
+     * Уменьшает количество товара на складе.
+     *
+     * @param sessionId идентификатор сессии пользователя
+     * @param productId идентификатор добавляемого товара
+     * @throws RuntimeException если товар не найден или отсутствует на складе
+     */
     @Transactional
     public void addToCart(String sessionId, Long productId) {
         Product product = productRepository.findById(productId)
@@ -77,6 +96,13 @@ public class CartService {
         cartRepository.save(cart);
     }
 
+    /**
+     * Удаляет товар из корзины пользователя и возвращает количество товара на склад.
+     *
+     * @param sessionId идентификатор сессии пользователя
+     * @param productId идентификатор удаляемого товара
+     * @throws RuntimeException если корзина не найдена
+     */
     public void removeFromCart(String sessionId, Long productId) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new RuntimeException("Корзина не найдена"));
@@ -96,6 +122,14 @@ public class CartService {
         cartRepository.save(cart);
     }
 
+    /**
+     * Увеличивает количество единиц товара в корзине на 1, если товар есть на складе.
+     * Уменьшает количество товара на складе.
+     *
+     * @param sessionId идентификатор сессии пользователя
+     * @param productId идентификатор товара
+     * @throws RuntimeException если корзина не найдена
+     */
     public void increaseItem(String sessionId, Long productId) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new RuntimeException("Корзина не найдена"));
@@ -114,6 +148,15 @@ public class CartService {
                 });
     }
 
+    /**
+     * Уменьшает количество единиц товара в корзине на 1.
+     * Если количество становится 0, удаляет товар из корзины.
+     * Возвращает товар на склад.
+     *
+     * @param sessionId идентификатор сессии пользователя
+     * @param productId идентификатор товара
+     * @throws RuntimeException если корзина не найдена
+     */
     public void decreaseItem(String sessionId, Long productId) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new RuntimeException("Корзина не найдена"));
@@ -136,6 +179,13 @@ public class CartService {
         cartRepository.save(cart);
     }
 
+    /**
+     * Получает активную корзину по идентификатору сессии.
+     * Если корзина отсутствует, создаёт новую.
+     *
+     * @param sessionId идентификатор сессии пользователя
+     * @return активная корзина
+     */
     public Cart getActiveCart(String sessionId) {
         return cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE).stream()
                 .findFirst()
@@ -147,6 +197,13 @@ public class CartService {
                 });
     }
 
+    /**
+     * Оформляет заказ, изменяя статус корзины на COMPLETED.
+     *
+     * @param sessionId идентификатор сессии пользователя
+     * @return оформленная корзина (заказ)
+     * @throws IllegalStateException если активная корзина не найдена
+     */
     public Cart checkout(String sessionId) {
         Cart cart = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE)
                 .stream().findFirst()

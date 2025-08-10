@@ -8,7 +8,6 @@ import org.mockito.Mock;
 
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,12 +38,22 @@ class CartControllerTest {
 
     private final String sessionId = "session-123";
 
+    /**
+     * Настраивает поведение моков для HTTP-запроса и сессии,
+     * чтобы при вызове request.getSession(true) возвращалась сессия с заданным sessionId.
+     */
     @BeforeEach
     void setup() {
         when(request.getSession(true)).thenReturn(session);
         when(session.getId()).thenReturn(sessionId);
     }
 
+    /**
+     * Тестирует метод отображения корзины:
+     * - Проверяет вызов сервиса получения активной корзины по sessionId.
+     * - Проверяет добавление корзины в модель.
+     * - Проверяет, что возвращается имя view "cart".
+     */
     @Test
     void testViewCart() {
         Cart cart = new Cart();
@@ -57,6 +66,11 @@ class CartControllerTest {
         assertEquals("cart", view);
     }
 
+    /**
+     * Тестирует добавление товара в корзину:
+     * - Проверяет вызов сервиса добавления товара с sessionId и productId.
+     * - Проверяет редирект на страницу товаров "/products".
+     */
     @Test
     void testAddToCart() {
         Long productId = 42L;
@@ -67,6 +81,11 @@ class CartControllerTest {
         assertEquals("redirect:/products", view);
     }
 
+    /**
+     * Тестирует удаление товара из корзины:
+     * - Проверяет вызов сервиса удаления товара по sessionId и productId.
+     * - Проверяет редирект на страницу корзины "/cart".
+     */
     @Test
     void testRemoveFromCart() {
         Long productId = 42L;
@@ -77,6 +96,11 @@ class CartControllerTest {
         assertEquals("redirect:/cart", view);
     }
 
+    /**
+     * Тестирует увеличение количества товара в корзине:
+     * - Проверяет вызов сервиса увеличения количества по sessionId и productId.
+     * - Проверяет редирект на страницу корзины "/cart".
+     */
     @Test
     void testIncreaseItem() {
         Long productId = 42L;
@@ -87,6 +111,11 @@ class CartControllerTest {
         assertEquals("redirect:/cart", view);
     }
 
+    /**
+     * Тестирует уменьшение количества товара в корзине:
+     * - Проверяет вызов сервиса уменьшения количества по sessionId и productId.
+     * - Проверяет редирект на страницу корзины "/cart".
+     */
     @Test
     void testDecreaseItem() {
         Long productId = 42L;
@@ -96,32 +125,4 @@ class CartControllerTest {
         verify(cartService).decreaseItem(sessionId, productId);
         assertEquals("redirect:/cart", view);
     }
-
-    // @Test
-    // void testCheckout() {
-    //     String sessionId = "test-session-id";
-
-    //     HttpServletRequest request = mock(HttpServletRequest.class);
-    //     HttpSession session = mock(HttpSession.class);
-
-    //     // Мокаем оба варианта getSession
-    //     when(request.getSession(true)).thenReturn(session);
-    //     when(request.getSession()).thenReturn(session);
-
-    //     when(session.getId()).thenReturn(sessionId);
-
-    //     Cart completedCart = new Cart();
-    //     completedCart.setId(1L);
-
-    //     when(cartService.checkout(sessionId)).thenReturn(completedCart);
-
-    //     CartController controller = new CartController(cartService);
-
-    //     String result = controller.checkout(request);
-
-    //     verify(cartService).checkout(sessionId);
-    //     verify(session).invalidate();
-
-    //     assertEquals("redirect:/orders/1", result);
-    // }
 }

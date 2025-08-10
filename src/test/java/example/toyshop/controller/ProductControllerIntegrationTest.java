@@ -21,6 +21,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 
+/**
+ * Интеграционные тесты для контроллера продуктов.
+ * 
+ * Тесты выполняются с использованием Spring Boot Test, MockMvc и реальной базы
+ * данных (в тестовом режиме).
+ * Транзакции откатываются после каждого теста (@Transactional).
+ */
 @AutoConfigureMockMvc
 @SpringBootTest
 @Transactional
@@ -29,19 +36,28 @@ public class ProductControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    // Внедряем сервис для сохранения продукта
+    /**
+     * Сервис для сохранения продуктов в базу данных.
+     */
     @Autowired
     private ProductService productService;
 
+    /**
+     * Мок-сервис для загрузки изображений, внедряется в контекст.
+     */
     @MockitoBean
     private ImageService imageService;
 
+    /**
+     * Тестирует отображение страницы списка продуктов с параметрами пагинации и
+     * сортировки.
+     * Проверяет:
+     * - HTTP статус 200 OK,
+     * - отображение view с именем "products",
+     * - наличие в модели атрибутов: products, currentPage, totalPages.
+     */
     @Test
     void testListProducts() throws Exception {
-        // Добавим в базу несколько продуктов через сервис
-        // Сервис и репозиторий используются из контекста Spring (реальная база)
-        // Поэтому просто вызываем контроллер напрямую через MockMvc
-
         mockMvc.perform(MockMvcRequestBuilders.get("/products")
                 .param("page", "0")
                 .param("size", "10")
@@ -53,15 +69,18 @@ public class ProductControllerIntegrationTest {
                 .andExpect(model().attributeExists("totalPages"));
     }
 
+    /**
+     * Тестирует отображение страницы продукта по ID.
+     * Сохраняет продукт через сервис и проверяет:
+     * - HTTP статус 200 OK,
+     * - отображение view с именем "product",
+     * - наличие в модели атрибута "product" с ожидаемым объектом.
+     */
     @Test
     void testViewProduct() throws Exception {
-        // Сохраним продукт в базу
         Product product = new Product();
         product.setName("Test Product");
         product.setPrice(BigDecimal.valueOf(123.45));
-
-        // Сохраним через сервис (через репозиторий) - внедрить ProductService
-        // Добавим поле в тесте
         productService.saveProduct(product);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/products/" + product.getId()))
@@ -71,6 +90,13 @@ public class ProductControllerIntegrationTest {
                 .andExpect(model().attribute("product", product));
     }
 
+    /**
+     * Тестирует отображение формы добавления нового продукта.
+     * Проверяет:
+     * - HTTP статус 200 OK,
+     * - отображение view с именем "add-product",
+     * - наличие в модели атрибута "product".
+     */
     @Test
     void testShowAddProductForm() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/products/add"))
@@ -79,6 +105,11 @@ public class ProductControllerIntegrationTest {
                 .andExpect(model().attributeExists("product"));
     }
 
+    /**
+     * Тестирует добавление нового продукта через POST-запрос.
+     * Отправляет параметры формы name и price.
+     * Проверяет редирект на страницу списка продуктов.
+     */
     @Test
     void testAddProduct() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/products/add")
@@ -88,6 +119,14 @@ public class ProductControllerIntegrationTest {
                 .andExpect(redirectedUrl("/products"));
     }
 
+    /**
+     * Тестирует загрузку изображения для продукта.
+     * Используется мок-объект imageService для возврата фиксированного URL.
+     * Проверяет:
+     * - HTTP статус 200 OK,
+     * - тип содержимого application/json,
+     * - в теле JSON есть поле "url" с ожидаемым значением.
+     */
     @Test
     void testUploadImage() throws Exception {
         when(imageService.uploadImage(any())).thenReturn("http://example.com/image.png");

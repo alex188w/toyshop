@@ -18,7 +18,6 @@ import example.toyshop.model.CartStatus;
 import example.toyshop.repository.CartRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OrderControllerIntegrationTest {
@@ -31,6 +30,11 @@ class OrderControllerIntegrationTest {
 
     private Cart completedOrder;
 
+    /**
+     * Подготавливает тестовые данные:
+     * - Очищает репозиторий корзин.
+     * - Создаёт и сохраняет заказ со статусом COMPLETED и фиксированным sessionId.
+     */
     @BeforeEach
     @Transactional
     void setUp() {
@@ -39,10 +43,16 @@ class OrderControllerIntegrationTest {
         completedOrder = new Cart();
         completedOrder.setStatus(CartStatus.COMPLETED);
         completedOrder.setSessionId("session-123");
-        completedOrder.setItems(List.of()); // если надо, можешь добавить items
+        completedOrder.setItems(List.of()); // при необходимости можно добавить товары
         cartRepository.save(completedOrder);
     }
 
+    /**
+     * Тестирует отображение списка заказов:
+     * - Проверяет успешный ответ (200 OK).
+     * - Проверяет, что используется view "orders".
+     * - Проверяет, что модель содержит список заказов, включая созданный заказ.
+     */
     @Test
     void testViewOrders() throws Exception {
         mockMvc.perform(get("/orders"))
@@ -52,6 +62,12 @@ class OrderControllerIntegrationTest {
                         hasProperty("id", equalTo(completedOrder.getId())))));
     }
 
+    /**
+     * Тестирует отображение конкретного заказа по id:
+     * - Проверяет успешный ответ (200 OK).
+     * - Проверяет, что используется view "order".
+     * - Проверяет, что в модели содержится заказ с ожидаемым id.
+     */
     @Test
     void testViewOrderById() throws Exception {
         mockMvc.perform(get("/orders/{id}", completedOrder.getId()))
@@ -61,6 +77,10 @@ class OrderControllerIntegrationTest {
                         hasProperty("id", equalTo(completedOrder.getId()))));
     }
 
+    /**
+     * Тестирует запрос несуществующего заказа:
+     * - Проверяет, что сервер возвращает статус 404 Not Found.
+     */
     @Test
     void testViewOrderNotFound() throws Exception {
         Long nonExistentId = 999999L;

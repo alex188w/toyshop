@@ -24,6 +24,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.Optional;
 
+/**
+ * Юнит-тесты для {@link example.toyshop.service.ProductService} с
+ * использованием Mockito.
+ * 
+ * <p>
+ * Покрываются основные методы сервиса:
+ * получение продуктов с фильтрацией и пагинацией,
+ * получение продукта по ID с обработкой отсутствия,
+ * сохранение продукта.
+ * </p>
+ */
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
@@ -33,6 +44,10 @@ class ProductServiceTest {
     @InjectMocks
     private ProductService productService;
 
+    /**
+     * Проверяет, что при поиске с ключевым словом вызывается метод
+     * {@link ProductRepository#findByNameContainingIgnoreCase(String, Pageable)}.
+     */
     @Test
     void getProducts_withKeyword_callsFindByNameContainingIgnoreCase() {
         String keyword = "test";
@@ -46,6 +61,10 @@ class ProductServiceTest {
         verify(productRepository).findByNameContainingIgnoreCase(eq(keyword), any(Pageable.class));
     }
 
+    /**
+     * Проверяет, что при отсутствии ключевого слова вызывается метод
+     * {@link ProductRepository#findAll(Pageable)}.
+     */
     @Test
     void getProducts_withoutKeyword_callsFindAll() {
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "price"));
@@ -58,6 +77,9 @@ class ProductServiceTest {
         verify(productRepository).findAll(any(Pageable.class));
     }
 
+    /**
+     * Проверяет успешное получение продукта по существующему ID.
+     */
     @Test
     void getProductById_existingId_returnsProduct() {
         Product product = new Product();
@@ -68,6 +90,12 @@ class ProductServiceTest {
         assertEquals(product, result);
     }
 
+    /**
+     * Проверяет, что при отсутствии продукта по ID
+     * метод выбрасывает
+     * {@link org.springframework.web.server.ResponseStatusException}
+     * со статусом {@link org.springframework.http.HttpStatus#NOT_FOUND}.
+     */
     @Test
     void getProductById_notFound_throwsException() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
@@ -78,6 +106,9 @@ class ProductServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
+    /**
+     * Проверяет вызов метода сохранения продукта в репозитории.
+     */
     @Test
     void saveProduct_callsRepositorySave() {
         Product product = new Product();
