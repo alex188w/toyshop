@@ -31,7 +31,8 @@ public class CartService {
      *
      * @param sessionId идентификатор сессии пользователя
      * @return активная корзина
-     * @throws IllegalStateException если найдено более одной активной корзины для sessionId
+     * @throws IllegalStateException если найдено более одной активной корзины для
+     *                               sessionId
      */
     public Cart getActiveCartBySessionId(String sessionId) {
         List<Cart> carts = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE);
@@ -58,27 +59,55 @@ public class CartService {
      */
     @Transactional
     public void addToCart(String sessionId, Long productId) {
+        Product product = findAvailableProduct(productId);
+        Cart cart = findOrCreateActiveCart(sessionId);
+        addOrUpdateCartItem(cart, product);
+        decreaseProductStock(product);
+    }
+
+    /**
+     * Находит товар по ID и проверяет, что он есть в наличии.
+     *
+     * @param productId ID товара
+     * @return найденный товар
+     * @throws RuntimeException если товар не найден или его количество равно 0
+     */
+    private Product findAvailableProduct(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Товар не найден"));
-
         if (product.getQuantity() <= 0) {
             throw new RuntimeException("Товара нет в наличии");
         }
+        return product;
+    }
 
-        List<Cart> carts = cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE);
-        Cart cart;
+    /**
+     * Ищет активную корзину для указанной сессии. Если корзины нет — создаёт новую.
+     *
+     * @param sessionId идентификатор сессии
+     * @return активная корзина
+     */
+    private Cart findOrCreateActiveCart(String sessionId) {
+        return cartRepository.findBySessionIdAndStatus(sessionId, CartStatus.ACTIVE)
+                .stream()
+                .findFirst()
+                .orElseGet(() -> {
+                    Cart newCart = new Cart();
+                    newCart.setSessionId(sessionId);
+                    newCart.setStatus(CartStatus.ACTIVE);
+                    return cartRepository.save(newCart);
+                });
+    }
 
-        if (carts.isEmpty()) {
-            Cart newCart = new Cart();
-            newCart.setSessionId(sessionId);
-            newCart.setStatus(CartStatus.ACTIVE);
-            cart = cartRepository.save(newCart);
-        } else {
-            cart = carts.get(0); // берем первую активную корзину
-        }
-
+    /**
+     * Добавляет товар в корзину или увеличивает его количество, если он уже есть.
+     *
+     * @param cart    корзина
+     * @param product товар
+     */
+    private void addOrUpdateCartItem(Cart cart, Product product) {
         Optional<CartItem> existingItem = cart.getItems().stream()
-                .filter(item -> item.getProduct().getId().equals(productId))
+                .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
@@ -91,13 +120,22 @@ public class CartService {
             cart.getItems().add(newItem);
         }
 
-        product.setQuantity(product.getQuantity() - 1);
-        productRepository.save(product);
         cartRepository.save(cart);
     }
 
     /**
-     * Удаляет товар из корзины пользователя и возвращает количество товара на склад.
+     * Уменьшает количество товара на складе на 1 и сохраняет изменения.
+     *
+     * @param product товар
+     */
+    private void decreaseProductStock(Product product) {
+        product.setQuantity(product.getQuantity() - 1);
+        productRepository.save(product);
+    }
+
+    /**
+     * Удаляет товар из корзины пользователя и возвращает количество товара на
+     * склад.
      *
      * @param sessionId идентификатор сессии пользователя
      * @param productId идентификатор удаляемого товара
@@ -123,7 +161,8 @@ public class CartService {
     }
 
     /**
-     * Увеличивает количество единиц товара в корзине на 1, если товар есть на складе.
+     * Увеличивает количество единиц товара в корзине на 1, если товар есть на
+     * складе.
      * Уменьшает количество товара на складе.
      *
      * @param sessionId идентификатор сессии пользователя

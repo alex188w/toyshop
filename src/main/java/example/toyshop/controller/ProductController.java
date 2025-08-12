@@ -3,11 +3,13 @@ package example.toyshop.controller;
 import example.toyshop.model.Product;
 import example.toyshop.service.ImageService;
 import example.toyshop.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
@@ -86,7 +88,17 @@ public class ProductController {
      * @return редирект на страницу списка товаров
      */
     @PostMapping("/add")
-    public String addProduct(@ModelAttribute Product product) {
+    public String addProduct(
+            @Valid @ModelAttribute Product product,
+            BindingResult bindingResult,
+            Model model) {
+
+        if (bindingResult.hasErrors()) {
+            // Вернуть пользователя на форму с ошибками
+            model.addAttribute("product", product);
+            return "add-product";
+        }
+
         productService.saveProduct(product);
         return "redirect:/products";
     }
